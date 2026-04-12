@@ -4,11 +4,11 @@
 
 | Layer      | Technology                                                  |
 | ---------- | ----------------------------------------------------------- |
-| Frontend   | React 19, Vite, TanStack Router, Tailwind CSS v4, shadcn/ui |
+| Frontend   | Next.js 16 App Router, React 19, Tailwind CSS v4, shadcn/ui |
 | API Client | Eden Treaty (type-safe RPC), React Query                    |
 | Backend    | Elysia (Bun runtime)                                        |
 | Auth       | Better Auth (email/password)                                |
-| ORM        | Prisma v7 (SQLite via libsql adapter)                       |
+| ORM        | Prisma v7 (PostgreSQL via `pg` driver adapter)              |
 | Validation | TypeBox (via Elysia + prismabox)                            |
 | Logging    | Pino                                                        |
 
@@ -42,34 +42,32 @@ prisma/schema.prisma
 ```
 ├── prisma/
 │   └── schema.prisma              # Single source of truth for all types
-├── generated/                     # Auto-generated, gitignored (except client)
-│   ├── client/                    # Prisma Client (TypeScript types + query engine)
-│   └── prismabox/                 # TypeBox schemas for Elysia validation
-├── server/                        # Backend
-│   ├── index.ts                   # Composition root — mounts modules, starts server
+├── generated/                     # Auto-generated Prisma client + prismabox output
+├── server/                        # Backend API
+│   ├── index.ts                   # Composition root - mounts modules, starts Elysia
 │   ├── context/
 │   │   └── app-context.ts         # AppContext, ServiceContainer, createContainer()
 │   ├── lib/
-│   │   ├── prisma.ts              # PrismaClient singleton (with libsql adapter)
+│   │   ├── prisma.ts              # PrismaClient singleton (with PostgreSQL adapter)
 │   │   ├── auth.ts                # Better Auth config
 │   │   └── auth-plugin.ts         # Elysia plugin: auth handler + withAuth macro
 │   ├── infrastructure/
 │   │   └── logging/               # ILogger, PinoLogger, createLogger()
 │   └── modules/
 │       └── todo/                  # Domain module (see Module Structure below)
-├── app/                           # Frontend (Vite root)
-│   ├── routes/                    # TanStack Router file-based routes (thin)
-│   ├── features/
-│   │   └── todo/                  # Feature module (see Feature Structure below)
+├── app/                           # Next.js App Router frontend
+│   ├── layout.tsx                 # Root layout
+│   ├── page.tsx                   # Home page
+│   ├── login/page.tsx             # Login page
+│   ├── signup/page.tsx            # Signup page
+│   ├── about/page.tsx             # About page
+│   ├── providers.tsx              # React Query provider
+│   ├── features/                  # Feature modules
 │   ├── components/                # Shared layout + UI only
-│   │   ├── Header.tsx
-│   │   ├── ThemeToggle.tsx
-│   │   └── ui/                    # shadcn/ui primitives
-│   └── lib/                       # Shared utilities
-│       ├── eden.ts                # Eden Treaty client
-│       ├── auth-client.ts         # Better Auth React client
-│       ├── query-client.ts        # React Query client
-│       └── utils.ts               # cn() helper
+│   └── lib/                       # Shared utilities and clients
+├── public/                        # Static assets served by Next.js
+├── .agents/                       # Codex skills
+├── AGENTS.md                      # Codex repository instructions
 ├── docs/                          # Architecture docs
 └── .chief/                        # Planning & task tracking
 ```
@@ -302,26 +300,29 @@ export function useCreateTodo() {
 
 ### Routes
 
-TanStack Router file-based routes. Routes are thin — they import from features:
+Next.js App Router owns the browser routes. Pages stay thin and import feature components:
 
 ```tsx
-// app/routes/index.tsx
+// app/page.tsx
 import { TodoList } from '#/features/todo'
+import { useSession } from '#/lib/auth-client'
 
-function HomePage() {
+export default function HomePage() {
   const { data: session } = useSession()
   if (session) return <TodoList />
   return <LandingPage />
 }
 ```
 
+The frontend talks to `/api/*` on the same origin. `next.config.mjs` rewrites those requests to the Elysia API server on port 3001.
+
 ## Dev vs Production
 
-| Concern  | Development                  | Production                        |
-| -------- | ---------------------------- | --------------------------------- |
-| Frontend | Vite dev server (:3000)      | Built static files in `app/dist/` |
-| Backend  | Elysia with --watch (:3001)  | Elysia serves API + static files  |
-| Proxy    | Vite proxies `/api` → :3001  | Single origin, no proxy needed    |
-| Run      | `bun run dev` (concurrently) | `bun run start`                   |
-| Logging  | pino-pretty (colorized)      | JSON (structured)                 |
-| Docker   | N/A                          | Multi-stage Dockerfile            |
+| Concern  | Development                          | Production                                  |
+| -------- | ------------------------------------ | ------------------------------------------- |
+| Frontend | Next.js dev server (:3000)           | Next.js server via `next start` (:3000)     |
+| Backend  | Elysia with --watch (:3001)          | Elysia API server (:3001)                   |
+| Proxy    | Next.js rewrites `/api` -> :3001     | Next.js rewrites `/api` -> internal :3001   |
+| Run      | `bun run dev` (concurrently)         | `bun run start`                             |
+| Logging  | pino-pretty (colorized)              | JSON (structured)                           |
+| Docker   | N/A                                  | Multi-stage Dockerfile running both servers |

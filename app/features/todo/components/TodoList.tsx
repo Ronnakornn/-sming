@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react"
 import { ClipboardListIcon, RefreshCwIcon } from "lucide-react"
 import { Button } from "#/components/ui/button"

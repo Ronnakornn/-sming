@@ -16,3 +16,7 @@ _ref
 
 *.db
 generated
+.next
+next-env.d.ts
+tsconfig.tsbuildinfo
+.devserver.log

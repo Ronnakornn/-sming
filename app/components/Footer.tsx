@@ -7,7 +7,7 @@ export default function Footer() {
         <p className="m-0 text-sm">
           &copy; {year} Thaitype. All rights reserved.
         </p>
-        <p className="island-kicker m-0">Built with React + Elysia + Prisma</p>
+        <p className="island-kicker m-0">Built with Next.js + Elysia + Prisma</p>
       </div>
       <div className="mt-4 flex justify-center gap-4">
         <a

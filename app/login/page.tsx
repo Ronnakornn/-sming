@@ -1,38 +1,43 @@
-import { createFileRoute, useNavigate, Link } from '@tanstack/react-router'
-import { useState } from 'react'
-import { signIn } from '#/lib/auth-client'
+"use client";
 
-export const Route = createFileRoute('/login')({ component: LoginPage })
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { signIn } from "#/lib/auth-client";
 
-function LoginPage() {
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
     try {
-      const result = await signIn.email({ email, password })
+      const result = await signIn.email({ email, password });
       if (result.error) {
-        setError(result.error.message ?? 'Sign in failed')
+        setError(result.error.message ?? "Sign in failed");
       } else {
-        navigate({ to: '/' })
+        router.push("/");
+        router.refresh();
       }
-    } catch (err) {
-      setError('An unexpected error occurred')
+    } catch {
+      setError("An unexpected error occurred");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
-    <main className="page-wrap flex min-h-[calc(100vh-80px)] items-center justify-center px-4 py-12">
+    <div className="page-wrap flex min-h-[calc(100vh-80px)] items-center justify-center px-4 py-12">
       <div className="island-shell w-full max-w-md rounded-2xl p-8">
-        <h1 className="mb-2 text-2xl font-bold text-[var(--sea-ink)]">Sign in</h1>
+        <h1 className="mb-2 text-2xl font-bold text-[var(--sea-ink)]">
+          Sign in
+        </h1>
         <p className="mb-6 text-sm text-[var(--sea-ink-soft)]">
           Welcome back. Enter your credentials to continue.
         </p>
@@ -45,7 +50,10 @@ function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-[var(--sea-ink)]">
+            <label
+              htmlFor="email"
+              className="mb-1.5 block text-sm font-medium text-[var(--sea-ink)]"
+            >
               Email
             </label>
             <input
@@ -60,7 +68,10 @@ function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-[var(--sea-ink)]">
+            <label
+              htmlFor="password"
+              className="mb-1.5 block text-sm font-medium text-[var(--sea-ink)]"
+            >
               Password
             </label>
             <input
@@ -79,17 +90,20 @@ function LoginPage() {
             disabled={loading}
             className="w-full rounded-full bg-[var(--lagoon-deep)] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
 
         <p className="mt-5 text-center text-sm text-[var(--sea-ink-soft)]">
-          Don't have an account?{' '}
-          <Link to="/signup" className="font-medium text-[var(--lagoon-deep)] hover:underline">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-[var(--lagoon-deep)] hover:underline"
+          >
             Sign up
           </Link>
         </p>
       </div>
-    </main>
-  )
+    </div>
+  );
 }

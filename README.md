@@ -1,32 +1,31 @@
-# Todo App Template — SPA + Elysia + Prisma Stack
+# Todo App Template - Next.js + Elysia + Prisma Stack
 
-A production-ready **Todo Application Template** built with React SPA, Elysia backend, and Prisma ORM. Implements module-based architecture with end-to-end type safety from database schema to frontend components. Serves as a foundation for building scalable full-stack applications with authentication, CRUD operations, and structured logging.
+A production-ready **Todo Application Template** built with Next.js App Router, Elysia backend, and Prisma ORM. It keeps the original module-based architecture and end-to-end type safety while replacing the Vite SPA shell with a modern Next.js frontend.
 
 ## Features
 
-- **Authentication** — Better Auth with email/password and session management
-- **Todo Management** — Full CRUD with filtering (all/pending/completed)
-- **End-to-End Type Safety** — Prisma schema drives types through the entire stack via Eden Treaty
-- **Module Architecture** — Domain-centric backend modules, feature-based frontend organization
-- **Auto-Generated Validation** — Prismabox generates TypeBox schemas from Prisma models
-- **Structured Logging** — Pino with pretty-print in dev, JSON in production
-- **Production Ready** — Single-server production mode with Dockerfile
+- **Authentication** - Better Auth with email/password and session management
+- **Todo Management** - Full CRUD with filtering (all/pending/completed)
+- **End-to-End Type Safety** - Prisma schema drives types through the entire stack via Eden Treaty
+- **Module Architecture** - Domain-centric backend modules, feature-based frontend organization
+- **Auto-Generated Validation** - Prismabox generates TypeBox schemas from Prisma models
+- **Structured Logging** - Pino with pretty-print in dev, JSON in production
+- **Next.js App Router** - File-system routing, layouts, and same-origin API proxying through Next.js
 
 ## Tech Stack
 
 ### Backend & API
 - **[Elysia](https://elysiajs.com)** — Type-safe web framework on Bun runtime
-- **[Prisma v7](https://prisma.io)** — ORM with SQLite (libsql adapter for Bun)
+- **[Prisma v7](https://prisma.io)** — ORM with PostgreSQL (`pg` driver adapter)
 - **[Better Auth](https://better-auth.com)** — Authentication library
 - **[Prismabox](https://github.com/prismabox/prismabox)** — Auto-generate TypeBox schemas from Prisma
 - **[Pino](https://getpino.io)** — Structured logging
 
 ### Frontend & UI
-- **[React 19](https://react.dev)** — UI library with Vite bundler
-- **[TanStack Router](https://tanstack.com/router)** — File-based routing
-- **[Eden Treaty](https://elysiajs.com/eden)** — Type-safe RPC client for Elysia
-- **[React Query](https://tanstack.com/query)** — Data fetching and cache management
-- **[shadcn/ui](https://ui.shadcn.com)** — Component library on Radix + Tailwind CSS v4
+- **[Next.js 16](https://nextjs.org)** - App Router frontend on React 19
+- **[Eden Treaty](https://elysiajs.com/eden)** - Type-safe RPC client for Elysia
+- **[React Query](https://tanstack.com/query)** - Data fetching and cache management
+- **[shadcn/ui](https://ui.shadcn.com)** - Component library on Radix + Tailwind CSS v4
 
 ## Architecture
 
@@ -44,25 +43,22 @@ prisma/schema.prisma (single source of truth)
 ### Project Structure
 
 ```
-server/                            # Backend
-  index.ts                         # Composition root — mounts modules, starts server
+server/                            # Backend API
+  index.ts                         # Composition root - mounts modules, starts Elysia on :3001
   context/app-context.ts           # DI container factory
   lib/                             # Auth config, Prisma client, auth plugin
   infrastructure/logging/          # ILogger, PinoLogger, factory
   modules/
     todo/                          # Domain module
-      todo.repository.ts           # Interface + Prisma implementation
-      todo.service.ts              # Business logic
-      todo.routes.ts               # Elysia route plugin
-      todo.errors.ts               # Domain errors
 
-app/                               # Frontend (Vite root)
-  routes/                          # TanStack Router (thin, imports from features)
-  features/
-    todo/                          # Feature module
-      components/                  # TodoList, TodoItem, AddTodoForm
-      hooks/useTodos.ts            # React Query + Eden hooks
-  components/                      # Shared: Header, ThemeToggle, ui/ (shadcn)
+app/                               # Next.js App Router frontend
+  layout.tsx                       # Root layout
+  page.tsx                         # Home page
+  login/page.tsx                   # Login page
+  signup/page.tsx                  # Signup page
+  about/page.tsx                   # About page
+  features/                        # Feature modules
+  components/                      # Shared UI and layout
   lib/                             # Eden client, auth client, query client
 
 prisma/schema.prisma               # Database schema + prismabox generator
@@ -94,9 +90,11 @@ cp .env.example .env
 Configure `.env`:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sming?schema=public"
 BETTER_AUTH_SECRET="your-secret-key-here"
-BETTER_AUTH_URL="http://localhost:3001"
+BETTER_AUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+API_BASE_URL="http://localhost:3001"
 ```
 
 ### 3. Set Up Database
@@ -117,16 +115,16 @@ This starts both frontend (http://localhost:3000) and backend (http://localhost:
 
 ```bash
 # Development
-bun run dev              # Start frontend + backend (concurrently)
-bun run dev:frontend     # Start Vite dev server only (port 3000)
+bun run dev              # Start Next.js frontend + Elysia backend
+bun run dev:frontend     # Start Next.js dev server only (port 3000)
 bun run dev:server       # Start Elysia backend only with watch (port 3001)
 
 # Build
-bun run build            # Build frontend
-bun run build:all        # Build frontend + generate Prisma client
+bun run build            # Build Next.js frontend
+bun run build:all        # Generate Prisma client + build frontend
 
 # Production
-bun run start            # Start production server (single port 3001)
+bun run start            # Start Next.js frontend (:3000) + Elysia API (:3001)
 
 # Database
 bun run db:generate      # Regenerate Prisma client + prismabox schemas
@@ -134,16 +132,18 @@ bun run db:push          # Push schema changes to database
 bun run db:studio        # Open Prisma Studio
 
 # Testing
-bun run test             # Run tests with Vitest
+bun run test             # Run Vitest
 ```
 
 ## Environment Variables
 
 | Variable | Description | Default |
 |---|---|---|
-| `DATABASE_URL` | SQLite database path | `file:./dev.db` |
-| `BETTER_AUTH_SECRET` | Auth secret (min 32 chars in production) | — |
-| `BETTER_AUTH_URL` | Backend URL for auth | `http://localhost:3001` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/sming?schema=public` |
+| `BETTER_AUTH_SECRET` | Auth secret (min 32 chars in production) | - |
+| `BETTER_AUTH_URL` | Public app URL used by Better Auth | `http://localhost:3000` |
+| `NEXT_PUBLIC_APP_URL` | Browser-facing frontend URL | `http://localhost:3000` |
+| `API_BASE_URL` | Internal API target used by Next.js rewrites | `http://localhost:3001` |
 | `NODE_ENV` | Environment (`development` / `production`) | `development` |
 
 ## Key Patterns
@@ -161,7 +161,7 @@ bun run test             # Run tests with Vitest
 1. Create `app/features/<name>/` with components and hooks
 2. Hooks use Eden client + React Query (types inferred from server)
 3. Export via barrel `index.ts`
-4. Import in routes: `import { Component } from '#/features/<name>'`
+4. Import in Next.js pages or layouts: `import { Component } from '#/features/<name>'`
 
 ### Type Rules
 
@@ -175,43 +175,46 @@ bun run test             # Run tests with Vitest
 
 ```bash
 docker build -t todo-app .
-docker run -p 3001:3001 todo-app
+docker run -p 3000:3000 todo-app
 ```
 
-The Dockerfile uses multi-stage builds: install deps, build frontend + Prisma, run single Elysia server serving both API and static files.
+The Dockerfile builds the Next.js frontend, keeps the Elysia API server, and starts both processes in one container. The browser talks to Next.js on port 3000, and Next proxies `/api/*` requests to the internal API on port 3001.
 
 ### Production Environment
 
 ```env
 NODE_ENV="production"
-DATABASE_URL="file:./prod.db"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sming?schema=public"
 BETTER_AUTH_SECRET="secure-production-secret-at-least-32-chars"
 BETTER_AUTH_URL="https://yourdomain.com"
 ```
 
-## Claude Code / Chief Agent Framework
+## AI Agent Setup
 
-This template ships with a **[Chief Agent Framework](https://github.com/thaitype/chief-agent-framework)** for AI-driven development using [Claude Code](https://claude.ai/code). It includes:
+This template includes optional repository context for both Codex and Claude-based workflows.
 
-- **`.chief/`** — Planning, milestones, task specs, and rules for autonomous agent execution
-- **`CLAUDE.md`** — Project rules, architecture context, and development commands that Claude reads
+### Codex
 
-If you use Claude Code, the chief-agent will read these files to plan and execute work autonomously.
+- **`AGENTS.md`** - Repository instructions, architecture guardrails, and development commands for Codex
+- **`.agents/skills/`** - Reusable skills available to Codex, including Prisma-specific references
 
-If you don't use Claude Code or prefer your own setup, remove them:
+Codex should start with `AGENTS.md`, then read `docs/ARCHITECTURE.md`, and open relevant skill docs when working on Prisma-related tasks.
 
-```bash
-rm -rf .chief .claude
-rm CLAUDE.md
-# Optionally create your own CLAUDE.md with your project context
-```
+### Claude Code / Chief Agent Framework
 
-The application code is fully independent of the framework.
+- **`.chief/`** - Planning, milestones, task specs, and rules for autonomous agent execution
+- **`CLAUDE.md`** - Project rules, architecture context, and development commands for Claude
+- **`.claude/`** - Claude agent and skill wiring for the chief-agent workflow
+
+If you use Claude Code, the chief-agent can read these files to plan and execute work autonomously.
+
+The application code is fully independent of both agent setups. Remove or customize whichever agent-specific files you do not need.
 
 ## Documentation
 
-- **[Architecture Guide](docs/ARCHITECTURE.md)** — Module structure, DI patterns, type safety chain
-- **[CLAUDE.md](CLAUDE.md)** — AI development guidelines and chief-agent framework
+- **[AGENTS.md](AGENTS.md)** - Codex project instructions and workflow entrypoint
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Module structure, DI patterns, type safety chain
+- **[CLAUDE.md](CLAUDE.md)** - AI development guidelines and chief-agent framework
 
 ## License
 

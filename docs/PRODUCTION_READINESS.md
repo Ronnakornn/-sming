@@ -43,10 +43,10 @@ Update with project-specific content or remove about page.
 ## Verified Good
 
 - No hardcoded secrets — `.env` is gitignored, `.env.example` has placeholders only
-- `dev.db`, `node_modules`, `generated/`, `dist/` all properly gitignored
+- Database artifacts are externalized via `DATABASE_URL`; generated output and build folders are gitignored
 - All imports resolve — no dead references
 - Docker multi-stage build references correct paths
 - TypeScript strict mode enabled with proper path aliases
 - Structured Pino logging — zero `console.log` in source
-- Documentation complete (README, ARCHITECTURE.md, CLAUDE.md)
+- Documentation complete (README, ARCHITECTURE.md, AGENTS.md, CLAUDE.md)
 - Clean architecture: modules, DI container, type safety chain

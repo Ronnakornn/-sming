@@ -1,3 +1,5 @@
+"use client";
+
 export { TodoList } from './components/TodoList'
 export { TodoItem } from './components/TodoItem'
 export { AddTodoForm } from './components/AddTodoForm'

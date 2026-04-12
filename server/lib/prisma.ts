@@ -1,8 +1,10 @@
 import { PrismaClient } from "#generated/client/client.ts";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-const adapter = new PrismaLibSql({
-  url: process.env["DATABASE_URL"] ?? "file:./dev.db",
+const adapter = new PrismaPg({
+  connectionString:
+    process.env["DATABASE_URL"] ??
+    "postgresql://postgres:postgres@localhost:5432/sming?schema=public",
 });
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };

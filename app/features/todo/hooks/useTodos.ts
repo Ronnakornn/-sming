@@ -1,3 +1,5 @@
+"use client";
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { Treaty } from '@elysiajs/eden'
 import { api } from '#/lib/eden'

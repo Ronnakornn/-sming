@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback } from "react"
 import { MoreHorizontalIcon, PencilIcon, TrashIcon, CheckIcon, XIcon } from "lucide-react"
 import { Checkbox } from "#/components/ui/checkbox"
