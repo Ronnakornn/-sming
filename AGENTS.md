@@ -27,6 +27,7 @@ bun run test
 bunx tsc --noEmit
 bun run db:generate
 bun run db:push
+bun run db:seed-admin
 bun run db:studio
 ```
 
@@ -40,7 +41,7 @@ bun run db:studio
 - Do not hand-write `t.Object({...})` schemas for Prisma-backed entities. Use generated prismabox schemas and derive variants with `t.Pick` / `t.Partial`.
 - Do not duplicate backend response types on the frontend. Infer them from Eden Treaty.
 - Keep `server/index.ts` as the API composition root. Wire services in `server/context/app-context.ts`.
-- Use the auth macro with `{ withAuth: true }` on protected routes instead of inline auth checks.
+- Use the auth macro with `{ withAuth: true }` and `{ withRole: 'ADMIN' }` on protected routes instead of inline auth checks.
 - Services and repositories receive `appContext` and use its logger. Do not add `console.log`.
 - Keep backend domain code inside `server/modules/<name>/`.
 - Keep frontend feature code inside `app/features/<name>/`. Shared UI stays in `app/components/`.

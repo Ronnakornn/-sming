@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Header from "#/components/Header";
-import Footer from "#/components/Footer";
+import AppChrome from "#/components/AppChrome";
 import { Providers } from "#/providers";
 import "./styles.css";
 
@@ -20,10 +19,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen">
         <Providers>
-          <Header />
-          <main className="min-h-[calc(100vh-80px)]">{children}</main>
+          <AppChrome>{children}</AppChrome>
         </Providers>
-        <Footer />
       </body>
     </html>
   );

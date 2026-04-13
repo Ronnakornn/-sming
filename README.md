@@ -95,12 +95,14 @@ BETTER_AUTH_SECRET="your-secret-key-here"
 BETTER_AUTH_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 API_BASE_URL="http://localhost:3001"
+ADMIN_EMAILS="admin@example.com"
 ```
 
 ### 3. Set Up Database
 
 ```bash
 bun run db:push
+bun run db:seed-admin
 ```
 
 ### 4. Start Development
@@ -129,6 +131,7 @@ bun run start            # Start Next.js frontend (:3000) + Elysia API (:3001)
 # Database
 bun run db:generate      # Regenerate Prisma client + prismabox schemas
 bun run db:push          # Push schema changes to database
+bun run db:seed-admin    # Promote users from ADMIN_EMAILS to ADMIN role
 bun run db:studio        # Open Prisma Studio
 
 # Testing
@@ -144,6 +147,7 @@ bun run test             # Run Vitest
 | `BETTER_AUTH_URL` | Public app URL used by Better Auth | `http://localhost:3000` |
 | `NEXT_PUBLIC_APP_URL` | Browser-facing frontend URL | `http://localhost:3000` |
 | `API_BASE_URL` | Internal API target used by Next.js rewrites | `http://localhost:3001` |
+| `ADMIN_EMAILS` | Comma-separated emails to promote via seed script | `admin@example.com` |
 | `NODE_ENV` | Environment (`development` / `production`) | `development` |
 
 ## Key Patterns

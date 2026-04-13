@@ -4,11 +4,61 @@ import { useState } from "react"
 import { ClipboardListIcon, RefreshCwIcon } from "lucide-react"
 import { Button } from "#/components/ui/button"
 import { Badge } from "#/components/ui/badge"
+import { Skeleton } from "#/components/ui/skeleton"
 import { AddTodoForm } from "./AddTodoForm"
 import { TodoItem } from "./TodoItem"
 import { useGetTodos, type Todo } from "../hooks/useTodos"
 
 type FilterType = "all" | "pending" | "completed"
+
+function TodoListSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <Skeleton className="h-7 w-32 bg-white/12" />
+          <Skeleton className="mt-2 h-4 w-44 bg-white/10" />
+        </div>
+        <Skeleton className="h-9 w-24 rounded-lg bg-white/10" />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-7 w-20 rounded-full bg-white/10" />
+        <Skeleton className="h-7 w-24 rounded-full bg-white/10" />
+        <Skeleton className="h-7 w-28 rounded-full bg-white/10" />
+      </div>
+
+      <div className="island-shell rounded-xl px-4 py-4">
+        <Skeleton className="h-10 w-full bg-white/10" />
+        <Skeleton className="mt-3 h-24 w-full bg-white/8" />
+        <Skeleton className="mt-3 h-10 w-32 rounded-lg bg-cyan-300/12" />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <Skeleton className="h-5 w-28 bg-white/10" />
+        <div className="flex gap-1 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-1">
+          <Skeleton className="h-8 flex-1 rounded-md bg-white/10" />
+          <Skeleton className="h-8 flex-1 rounded-md bg-white/10" />
+          <Skeleton className="h-8 flex-1 rounded-md bg-white/10" />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div key={index} className="island-shell rounded-xl px-4 py-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <Skeleton className="h-5 w-48 bg-white/10" />
+                <Skeleton className="mt-2 h-4 w-3/4 bg-white/8" />
+              </div>
+              <Skeleton className="h-8 w-24 rounded-lg bg-white/10" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function TodoList() {
   const [filter, setFilter] = useState<FilterType>("all")
@@ -29,12 +79,7 @@ export function TodoList() {
   const completedCount = todos.filter((t) => t.completed).length
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-12 text-[var(--sea-ink-soft)]">
-        <RefreshCwIcon className="size-6 animate-spin" />
-        <p className="text-sm">Loading your todos...</p>
-      </div>
-    )
+    return <TodoListSkeleton />
   }
 
   if (error) {
