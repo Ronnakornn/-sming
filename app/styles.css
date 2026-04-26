@@ -400,6 +400,17 @@ a {
   backdrop-filter: blur(18px);
 }
 
+.admin-content-wrap {
+  width: min(1560px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+@media (min-width: 1280px) {
+  .admin-content-wrap {
+    width: min(1680px, calc(100% - 3rem));
+  }
+}
+
 .admin-users-scope .island-shell,
 .admin-todo-scope .island-shell {
   border-color: rgba(255, 255, 255, 0.1);

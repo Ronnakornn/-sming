@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "chief-install": {
+      "source": "thaitype/chief",
+      "sourceType": "github",
+      "computedHash": "fa06e878764ed7e513f51af8a94605913a0db90d369ebf9ad0ae858332006312"
+    },
     "prisma-cli": {
       "source": "prisma/skills",
       "sourceType": "github",

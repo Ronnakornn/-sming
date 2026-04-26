@@ -1,12 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   CommandIcon,
   ClipboardListIcon,
+  KeyRoundIcon,
   LayoutDashboardIcon,
   PanelLeftCloseIcon,
   MenuIcon,
@@ -30,6 +32,7 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "#/components/ui/sidebar";
+import type { PermissionKey } from "#server/modules/role";
 
 interface AdminSidebarNavProps {
   user: {
@@ -38,6 +41,7 @@ interface AdminSidebarNavProps {
     email: string;
     role?: string | null;
   };
+  permissionKeys: PermissionKey[];
   children: ReactNode;
 }
 
@@ -45,28 +49,45 @@ const ADMIN_NAV_ITEMS = [
   {
     title: "Dashboard",
     href: "/admin",
+    permission: "admin.dashboard",
     icon: LayoutDashboardIcon,
     match: (pathname: string) => pathname === "/admin",
   },
   {
     title: "Users",
     href: "/admin/users",
+    permission: "admin.users",
     icon: ShieldCheckIcon,
     match: (pathname: string) => pathname.startsWith("/admin/users"),
   },
   {
+    title: "Permissions",
+    href: "/admin/permissions",
+    permission: "admin.roles",
+    icon: KeyRoundIcon,
+    match: (pathname: string) => pathname.startsWith("/admin/permissions"),
+  },
+  {
     title: "Todo",
     href: "/admin/todo",
+    permission: "admin.todos",
     icon: ClipboardListIcon,
     match: (pathname: string) => pathname.startsWith("/admin/todo"),
   },
   {
     title: "Profile",
     href: "/admin/profile",
+    permission: "admin.profile",
     icon: UserCircleIcon,
     match: (pathname: string) => pathname.startsWith("/admin/profile"),
   },
-] as const;
+] as const satisfies ReadonlyArray<{
+  title: string;
+  href: string;
+  permission: PermissionKey;
+  icon: typeof LayoutDashboardIcon;
+  match: (pathname: string) => boolean;
+}>;
 
 function getPageTitle(pathname: string) {
   return (
@@ -76,10 +97,13 @@ function getPageTitle(pathname: string) {
 
 export function AdminSidebarNav({
   user,
+  permissionKeys,
   children,
 }: AdminSidebarNavProps) {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
+  const permissionSet = useMemo(() => new Set(permissionKeys), [permissionKeys]);
+  const visibleNavItems = ADMIN_NAV_ITEMS.filter((item) => permissionSet.has(item.permission));
 
   return (
     <SidebarProvider defaultOpen>
@@ -112,7 +136,7 @@ export function AdminSidebarNav({
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {ADMIN_NAV_ITEMS.map((item) => (
+                {visibleNavItems.map((item) => (
                   <SidebarMenuItem key={item.href} className="relative">
                     {item.match(pathname) ? (
                       <motion.span
@@ -159,7 +183,7 @@ export function AdminSidebarNav({
       </Sidebar>
 
       <SidebarInset className="bg-transparent">
-        <div className="page-wrap relative w-full px-4 pb-8 pt-6 md:px-6">
+        <div className="admin-content-wrap relative w-full px-4 pb-8 pt-6 md:px-6">
           <div className="mb-5 flex items-center justify-between md:hidden">
             <SidebarTrigger className="h-10 w-10 rounded-full border border-white/12 bg-slate-950/70 text-slate-100 backdrop-blur-md">
               <MenuIcon className="size-4" />

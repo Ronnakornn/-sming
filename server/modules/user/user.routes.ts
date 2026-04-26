@@ -1,42 +1,42 @@
 import { Elysia, t } from 'elysia'
 import { authPlugin } from '#server/lib/auth-plugin'
 import type { ServiceContainer } from '#server/context/app-context.ts'
-import { UserPlain, UserPlainInputUpdate } from '#generated/prismabox/User.ts'
+import { UserPlain } from '#generated/prismabox/User.ts'
 
 const AdminUserResponse = t.Pick(UserPlain, ['id', 'name', 'email', 'role', 'createdAt', 'updatedAt'])
 const CreateUserBody = t.Object({
   name: t.String({ minLength: 1 }),
   email: t.String({ format: 'email' }),
   password: t.String({ minLength: 8 }),
-  role: t.Union([t.Literal('USER'), t.Literal('ADMIN')]),
+  role: t.String({ minLength: 1 }),
 })
 const UpdateUserBody = t.Object({
   name: t.String({ minLength: 1 }),
   email: t.String({ format: 'email' }),
-  role: t.Union([t.Literal('USER'), t.Literal('ADMIN')]),
+  role: t.String({ minLength: 1 }),
 })
-const UpdateUserRoleBody = t.Required(t.Pick(UserPlainInputUpdate, ['role']))
+const UpdateUserRoleBody = t.Object({ role: t.String({ minLength: 1 }) })
 
 export function createUserRoutes(container: ServiceContainer) {
   return new Elysia({ prefix: '/api/users' })
     .use(authPlugin)
     .get('/', () => container.userService.listForAdmin(), {
-      withRole: 'ADMIN',
+      withPermission: 'admin.users',
       response: t.Array(AdminUserResponse),
     })
     .post('/', ({ body }) => container.userService.createForAdmin(body), {
-      withRole: 'ADMIN',
+      withPermission: 'admin.users',
       body: CreateUserBody,
       response: AdminUserResponse,
     })
     .patch('/:id', ({ user, params: { id }, body }) => container.userService.updateForAdmin(user.id, id, body), {
-      withRole: 'ADMIN',
+      withPermission: 'admin.users',
       params: t.Object({ id: t.String() }),
       body: UpdateUserBody,
       response: AdminUserResponse,
     })
     .patch('/:id/role', ({ user, params: { id }, body }) => container.userService.updateRole(user.id, id, body.role), {
-      withRole: 'ADMIN',
+      withPermission: 'admin.users',
       params: t.Object({ id: t.String() }),
       body: UpdateUserRoleBody,
       response: AdminUserResponse,
@@ -45,7 +45,7 @@ export function createUserRoutes(container: ServiceContainer) {
       await container.userService.deleteForAdmin(user.id, id)
       return { success: true }
     }, {
-      withRole: 'ADMIN',
+      withPermission: 'admin.users',
       params: t.Object({ id: t.String() }),
       response: t.Object({ success: t.Boolean() }),
     })

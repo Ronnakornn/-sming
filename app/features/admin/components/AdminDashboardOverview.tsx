@@ -6,14 +6,15 @@ import { motion, useReducedMotion } from "motion/react";
 import {
   ArrowRightIcon,
   ClipboardListIcon,
+  KeyRoundIcon,
   ShieldCheckIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useAdminRoles } from "#/features/admin/hooks/useAdminRoles";
 import { useAdminUsers } from "#/features/user";
-import { isAdminRole } from "#/lib/roles";
 import { AdminPageIntro } from "./AdminPageIntro";
 
 interface AdminDashboardOverviewProps {
@@ -27,6 +28,12 @@ const quickLinks = [
     description: "Create accounts, update roles, and remove access.",
     href: "/admin/users",
     icon: UsersIcon,
+  },
+  {
+    title: "Role permissions",
+    description: "Review route permissions for each role.",
+    href: "/admin/permissions",
+    icon: KeyRoundIcon,
   },
   {
     title: "View your todos",
@@ -59,9 +66,16 @@ export function AdminDashboardOverview({
   heroVisual,
 }: AdminDashboardOverviewProps) {
   const { data: users = [], isLoading, error } = useAdminUsers();
+  const { data: roles = [] } = useAdminRoles();
   const prefersReducedMotion = useReducedMotion();
 
-  const adminCount = users.filter((user) => isAdminRole(user.role)).length;
+  const adminRoleNames = new Set(
+    roles
+      .filter((role) => role.permissions.some((permission) => permission.key === "admin.access"))
+      .map((role) => role.name),
+  );
+  if (adminRoleNames.size === 0) adminRoleNames.add("ADMIN");
+  const adminCount = users.filter((user) => adminRoleNames.has(user.role)).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -149,7 +163,7 @@ export function AdminDashboardOverview({
         </motion.div>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {isLoading
           ? quickLinks.map((item) => (
               <AdminDashboardLinkSkeleton key={item.href} />

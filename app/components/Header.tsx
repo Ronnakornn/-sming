@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "./ThemeToggle";
 import { useSession, signOut } from "#/lib/auth-client";
-import { isAdminRole } from "#/lib/roles";
+import { ROLES, isAdminRole } from "#/lib/roles";
 
 export default function Header() {
   const router = useRouter();
@@ -37,7 +37,7 @@ export default function Header() {
             <>
               {session ? (
                 <div className="flex items-center gap-3">
-                  {isAdminRole(session.user.role) && (
+                  {(isAdminRole(session.user.role) || session.user.role !== ROLES.USER) && (
                     <Link
                       href="/admin"
                       className="rounded-full border border-[rgba(50,143,151,0.3)] bg-[rgba(79,184,178,0.14)] px-3 py-1.5 text-xs font-semibold text-[var(--lagoon-deep)] no-underline transition hover:bg-[rgba(79,184,178,0.24)]"

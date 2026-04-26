@@ -1,7 +1,7 @@
 import { Badge } from "#/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 import { AdminPageIntro, AdminSpaceCat } from "#/features/admin";
-import { requireAdmin } from "#/lib/auth-server";
+import { requirePermission } from "#/lib/auth-server";
 
 function getOptionalDateLabel(
   value: unknown,
@@ -21,7 +21,7 @@ function getOptionalDateLabel(
 }
 
 export default async function AdminProfilePage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("admin.profile");
   const maybeSession = session as {
     session?: {
       expiresAt?: string | Date;

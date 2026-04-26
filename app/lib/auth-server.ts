@@ -1,7 +1,8 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "#server/lib/auth";
-import { isAdminRole } from "#/lib/roles";
+import { prisma } from "#server/lib/prisma";
+import { userRoleHasPermission, type PermissionKey } from "#server/modules/role";
 
 export async function getServerSession() {
   return auth.api.getSession({
@@ -20,9 +21,13 @@ export async function requireUser() {
 }
 
 export async function requireAdmin() {
+  return requirePermission("admin.access");
+}
+
+export async function requirePermission(permissionKey: PermissionKey) {
   const session = await requireUser();
 
-  if (!isAdminRole(session.user.role)) {
+  if (!(await userRoleHasPermission(prisma, session.user.role, permissionKey))) {
     notFound();
   }
 

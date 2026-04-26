@@ -1,8 +1,8 @@
-import { requireAdmin } from "#/lib/auth-server";
+import { requirePermission } from "#/lib/auth-server";
 import { AdminDashboardOverview, AdminSpaceCat } from "#/features/admin";
 
 export default async function AdminPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("admin.dashboard");
 
   return (
     <AdminDashboardOverview

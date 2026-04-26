@@ -1,9 +1,9 @@
 import { AdminUserTable } from "#/features/user";
 import { AdminPageIntro, AdminSpaceCat } from "#/features/admin";
-import { requireAdmin } from "#/lib/auth-server";
+import { requirePermission } from "#/lib/auth-server";
 
 export default async function AdminUsersPage() {
-  const session = await requireAdmin();
+  const session = await requirePermission("admin.users");
 
   return (
     <div className="flex flex-col gap-6">

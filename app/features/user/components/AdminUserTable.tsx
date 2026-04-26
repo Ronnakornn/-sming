@@ -22,6 +22,7 @@ import {
 import { Input } from "#/components/ui/input";
 import { Skeleton } from "#/components/ui/skeleton";
 import { ROLES, type AppRole, isAdminRole } from "#/lib/roles";
+import { useAdminRoles } from "#/features/admin/hooks/useAdminRoles";
 import {
   useAdminUsers,
   useCreateAdminUser,
@@ -38,6 +39,11 @@ interface UserFormState {
   email: string;
   role: AppRole;
   password: string;
+}
+
+interface RoleOption {
+  name: string;
+  hasAdminAccess: boolean;
 }
 
 const EMPTY_CREATE_FORM: UserFormState = {
@@ -129,6 +135,7 @@ function UserDialogForm(props: {
   description: string;
   submitLabel: string;
   initialValues: UserFormState;
+  roles: RoleOption[];
   disableUserRoleOption?: boolean;
   roleHint?: string | null;
   pending: boolean;
@@ -143,6 +150,7 @@ function UserDialogForm(props: {
     description,
     submitLabel,
     initialValues,
+    roles,
     disableUserRoleOption = false,
     roleHint = null,
     pending,
@@ -243,8 +251,11 @@ function UserDialogForm(props: {
               }
               className="flex h-9 w-full rounded-md border border-white/10 bg-slate-900/80 px-3 py-2 text-sm text-slate-100 outline-none focus:border-cyan-300/50 focus:ring-2 focus:ring-cyan-300/20"
             >
-              <option value={ROLES.USER} disabled={disableUserRoleOption}>USER</option>
-              <option value={ROLES.ADMIN}>ADMIN</option>
+              {roles.map((role) => (
+                <option key={role.name} value={role.name} disabled={disableUserRoleOption && !role.hasAdminAccess}>
+                  {role.name}
+                </option>
+              ))}
             </select>
             {roleHint ? (
               <p className="text-xs text-slate-400">{roleHint}</p>
@@ -282,6 +293,10 @@ export function AdminUserTable({ currentUserId }: AdminUserTableProps) {
     error,
     refetch,
   } = useAdminUsers();
+  const {
+    data: roles = [],
+    isLoading: rolesLoading,
+  } = useAdminRoles();
   const createUser = useCreateAdminUser();
   const updateUser = useUpdateAdminUser();
   const deleteUser = useDeleteAdminUser();
@@ -296,7 +311,17 @@ export function AdminUserTable({ currentUserId }: AdminUserTableProps) {
   const editingUser = users.find((user) => user.id === editingUserId) ?? null;
   const deletingUser = users.find((user) => user.id === deletingUserId) ?? null;
 
-  if (isLoading) {
+  const roleOptions: RoleOption[] = roles.length > 0
+    ? roles.map((role) => ({
+        name: role.name,
+        hasAdminAccess: role.permissions.some((permission) => permission.key === "admin.access"),
+      }))
+    : [
+        { name: ROLES.USER, hasAdminAccess: false },
+        { name: ROLES.ADMIN, hasAdminAccess: true },
+      ];
+
+  if (isLoading || rolesLoading) {
     return <AdminUsersTableSkeleton />;
   }
 
@@ -443,6 +468,7 @@ export function AdminUserTable({ currentUserId }: AdminUserTableProps) {
         description="Create an account that can sign in immediately."
         submitLabel="Create"
         initialValues={EMPTY_CREATE_FORM}
+        roles={roleOptions}
         pending={createUser.isPending}
         errorMessage={createError}
         onOpenChange={(open) => {
@@ -472,6 +498,7 @@ export function AdminUserTable({ currentUserId }: AdminUserTableProps) {
           role: (editingUser?.role ?? ROLES.USER) as AppRole,
           password: "",
         }}
+        roles={roleOptions}
         disableUserRoleOption={editingUser?.id === currentUserId && editingUser.role === ROLES.ADMIN}
         roleHint={
           editingUser?.id === currentUserId && editingUser.role === ROLES.ADMIN

@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { UserService } from "./user.service.ts"
 import type { IUserRepository } from "./user.repository.ts"
-import type { Role } from "#generated/client/enums.ts"
 
 const { signUpEmailMock } = vi.hoisted(() => ({
   signUpEmailMock: vi.fn(),
@@ -42,7 +41,7 @@ function createUser(overrides: Partial<{
   id: string
   name: string
   email: string
-  role: Role
+  role: string
 }> = {}) {
   const now = new Date("2026-04-12T00:00:00.000Z")
 
@@ -64,6 +63,9 @@ function createRepoMock(): IUserRepository {
     findById: vi.fn(),
     findByEmail: vi.fn(),
     countAdmins: vi.fn(),
+    countUsersWithPermission: vi.fn(),
+    roleExists: vi.fn(async (role: string) => role === "USER" || role === "ADMIN"),
+    roleHasPermission: vi.fn(async (role: string) => role === "ADMIN"),
     updateUser: vi.fn(),
     delete: vi.fn(),
     promoteByEmails: vi.fn(),
@@ -97,7 +99,7 @@ describe("UserService", () => {
     const repo = createRepoMock()
     vi.mocked(repo.findById).mockResolvedValue(createUser({ id: "admin-2", role: "ADMIN" }))
     vi.mocked(repo.findByEmail).mockResolvedValue(null)
-    vi.mocked(repo.countAdmins).mockResolvedValue(0)
+    vi.mocked(repo.countUsersWithPermission).mockResolvedValue(0)
 
     const service = new UserService(createAppContext(), repo)
 

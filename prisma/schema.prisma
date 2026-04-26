@@ -15,16 +15,11 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
   id            String    @id @default(cuid())
   name          String
   email         String    @unique
-  role          Role      @default(USER)
+  role          String    @default("USER")
   emailVerified Boolean   @default(false)
   image         String?
   createdAt     DateTime  @default(now())
@@ -33,6 +28,43 @@ model User {
   sessions Session[]
   accounts Account[]
   todos    Todo[]
+  roleRef  Role      @relation(fields: [role], references: [name], onUpdate: Cascade)
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  system      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  users       User[]
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String
+  group       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  roles RolePermission[]
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
 }
 
 model Session {

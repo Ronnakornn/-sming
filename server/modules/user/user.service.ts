@@ -1,8 +1,8 @@
-import type { Role } from '#generated/client/enums.ts'
 import { isAPIError } from 'better-auth/api'
 import type { AppContext } from '#server/context/app-context.ts'
 import { auth } from '#server/lib/auth.ts'
 import type { ILogger } from '#server/infrastructure/logging/index.ts'
+import { SYSTEM_ROLE_NAMES } from '#server/modules/role/role.permissions.ts'
 import type { AdminUserListItem, IUserRepository } from './user.repository.ts'
 import { UserServiceError } from './user.errors.ts'
 
@@ -10,13 +10,13 @@ export interface CreateAdminUserData {
   name: string
   email: string
   password: string
-  role: Role
+  role: string
 }
 
 export interface UpdateAdminUserData {
   name: string
   email: string
-  role: Role
+  role: string
 }
 
 export class UserService {
@@ -36,7 +36,7 @@ export class UserService {
 
   async createForAdmin(data: CreateAdminUserData): Promise<AdminUserListItem> {
     this.logger.info('UserService.createForAdmin', { email: data.email, role: data.role })
-    this.validateCreateInput(data)
+    await this.validateCreateInput(data)
 
     const email = data.email.trim().toLowerCase()
     const existingUser = await this.repo.findByEmail(email)
@@ -53,8 +53,8 @@ export class UserService {
         },
       })
 
-      const createdUser = data.role === 'ADMIN'
-        ? await this.repo.updateUser(result.user.id, { role: 'ADMIN' })
+      const createdUser = data.role !== SYSTEM_ROLE_NAMES.USER
+        ? await this.repo.updateUser(result.user.id, { role: data.role })
         : await this.repo.findById(result.user.id)
 
       if (!createdUser) {
@@ -76,14 +76,17 @@ export class UserService {
 
   async updateForAdmin(actorId: string, targetUserId: string, data: UpdateAdminUserData): Promise<AdminUserListItem> {
     this.logger.info('UserService.updateForAdmin', { actorId, targetUserId, role: data.role })
-    this.validateUpdateInput(data)
+    await this.validateUpdateInput(data)
 
     const targetUser = await this.repo.findById(targetUserId)
     if (!targetUser) {
       throw new UserServiceError('User not found', 404)
     }
 
-    if (targetUser.id === actorId && targetUser.role === 'ADMIN' && data.role === 'USER') {
+    const targetHasAdminAccess = await this.repo.roleHasPermission(targetUser.role, 'admin.access')
+    const nextHasAdminAccess = await this.repo.roleHasPermission(data.role, 'admin.access')
+
+    if (targetUser.id === actorId && targetHasAdminAccess && !nextHasAdminAccess) {
       throw new UserServiceError('You cannot remove your own admin access', 400)
     }
 
@@ -93,8 +96,8 @@ export class UserService {
       throw new UserServiceError('Email is already in use', 409)
     }
 
-    if (targetUser.role === 'ADMIN' && data.role === 'USER') {
-      const remainingAdminCount = await this.repo.countAdmins(targetUserId)
+    if (targetHasAdminAccess && !nextHasAdminAccess) {
+      const remainingAdminCount = await this.repo.countUsersWithPermission('admin.access', targetUserId)
       if (remainingAdminCount < 1) {
         throw new UserServiceError('At least one admin must remain', 400)
       }
@@ -109,7 +112,7 @@ export class UserService {
     return this.toAdminUser(updated)
   }
 
-  async updateRole(actorId: string, targetUserId: string, role: Role): Promise<AdminUserListItem> {
+  async updateRole(actorId: string, targetUserId: string, role: string): Promise<AdminUserListItem> {
     const targetUser = await this.repo.findById(targetUserId)
     if (!targetUser) {
       throw new UserServiceError('User not found', 404)
@@ -134,8 +137,8 @@ export class UserService {
       throw new UserServiceError('You cannot delete your own account', 400)
     }
 
-    if (targetUser.role === 'ADMIN') {
-      const remainingAdminCount = await this.repo.countAdmins(targetUserId)
+    if (await this.repo.roleHasPermission(targetUser.role, 'admin.access')) {
+      const remainingAdminCount = await this.repo.countUsersWithPermission('admin.access', targetUserId)
       if (remainingAdminCount < 1) {
         throw new UserServiceError('At least one admin must remain', 400)
       }
@@ -144,7 +147,7 @@ export class UserService {
     await this.repo.delete(targetUserId)
   }
 
-  private validateCreateInput(data: CreateAdminUserData): void {
+  private async validateCreateInput(data: CreateAdminUserData): Promise<void> {
     if (!data.name.trim()) {
       throw new UserServiceError('Name is required', 400)
     }
@@ -154,21 +157,21 @@ export class UserService {
     if (!data.password || data.password.length < 8) {
       throw new UserServiceError('Password must be at least 8 characters', 400)
     }
-    this.assertRole(data.role)
+    await this.assertRole(data.role)
   }
 
-  private validateUpdateInput(data: UpdateAdminUserData): void {
+  private async validateUpdateInput(data: UpdateAdminUserData): Promise<void> {
     if (!data.name.trim()) {
       throw new UserServiceError('Name is required', 400)
     }
     if (!data.email.trim()) {
       throw new UserServiceError('Email is required', 400)
     }
-    this.assertRole(data.role)
+    await this.assertRole(data.role)
   }
 
-  private assertRole(role: Role): void {
-    if (role !== 'USER' && role !== 'ADMIN') {
+  private async assertRole(role: string): Promise<void> {
+    if (!role.trim() || !(await this.repo.roleExists(role))) {
       throw new UserServiceError('Invalid role', 400)
     }
   }
